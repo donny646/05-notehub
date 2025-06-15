@@ -48,19 +48,16 @@ export default function NoteForm({ onClose, onSuccess }: NoteFormProps) {
   const { mutate } = useMutation({
     mutationFn: (noteData: NewNoteData) => createNote(noteData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 
-  const handleSubmit = (
-    values: NewNoteData,
-    actions: FormikHelpers<NewNoteData>
-  ) => {
-    mutate(values);
-    actions.resetForm();
-    onSuccess();
-    console.log(values.tag);
-  };
+  const { mutate } = useMutation({
+    mutationFn: (noteData: NewNoteData) => createNote(noteData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      onSuccess();
+  });
 
   return (
     <Formik
