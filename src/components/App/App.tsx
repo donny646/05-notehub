@@ -12,21 +12,14 @@ import type { Tag } from "../../types/note";
 
 export default function App() {
   const [searchQuery, setQuery] = useState("");
-
-  const [sortQuery, setSortQuery] = useState<Tag>("Personal");
-
   const [currentPage, setCurrentPage] = useState(1);
-
   const [modalOnClose, setModalOnClose] = useState(false);
-
-  const onPageChange = ({ selected }: { selected: number }) =>
-    setCurrentPage(selected + 1);
-
   const [debounceQuery] = useDebounce(searchQuery, 500);
 
   const { data, isSuccess } = useQuery({
-    queryKey: ["notes", debounceQuery, currentPage, sortQuery],
-    queryFn: () => fetchNotes({ searchQuery, currentPage, sortQuery }),
+    queryKey: ["notes", debounceQuery, currentPage],
+    queryFn: () => fetchNotes({ searchQuery: debounceQuery, currentPage }),
+    keepPreviousData: true,
   });
 
   const totalPages = data?.totalPages ?? 0;
@@ -43,8 +36,6 @@ export default function App() {
     <div className={css.app}>
       <header className={css.toolbar}>
         <SearchBox value={searchQuery} onSearch={setQuery} />
-
-        <SortFilter changeTag={setSortQuery} />
 
         {isSuccess && totalPages > 1 && (
           <Pagination
