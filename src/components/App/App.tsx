@@ -1,62 +1,87 @@
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { createNote, deleteNote, fetchNotes } from "../../services/noteService";
+import NoteList from "../NoteList/NoteList";
+import type { createNoteValues } from "../../types/note";
+
 import css from "./App.module.css";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchNotes } from "../../services/noteService";
-import NoteList from "../NoteList/NoteList";
-import SearchBox from "../SearchBox/SearchBox";
 import Pagination from "../Pagination/Pagination";
-import { useDebounce } from "use-debounce";
 import NoteModal from "../NoteModal/NoteModal";
-import SortFilter from "../SortFilter/SortFilter";
-import type { Tag } from "../../types/note";
+import SearchBox from "../SearchBox/SearchBox";
+import { useDebounce } from "use-debounce";
+import Loader from "../Loader/Loader";
 
-export default function App() {
-  const [searchQuery, setQuery] = useState("");
+function App() {
+  const queryClient = useQueryClient();
+
   const [currentPage, setCurrentPage] = useState(1);
-  const [modalOnClose, setModalOnClose] = useState(false);
-  const [debounceQuery] = useDebounce(searchQuery, 500);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data, isSuccess } = useQuery({
-    queryKey: ["notes", debounceQuery, currentPage],
-    queryFn: () => fetchNotes({ searchQuery: debounceQuery, currentPage }),
-    keepPreviousData: true,
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery] = useDebounce(searchQuery, 300);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["todos", currentPage, debouncedQuery],
+    queryFn: () => fetchNotes(currentPage, 10, debouncedQuery),
+    placeholderData: keepPreviousData,
   });
 
   const totalPages = data?.totalPages ?? 0;
 
-  const createNoteBtn = () => {
-    setModalOnClose(true);
+  const createMutation = useMutation({
+    mutationFn: createNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+  });
+
+  const handleCreateNote = (newTodo: createNoteValues) => {
+    createMutation.mutate(newTodo);
   };
 
-  const closeModal = () => {
-    setModalOnClose(false);
+  const deleteMutation = useMutation({
+    mutationFn: deleteNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+  });
+
+  const handleDeleteNote = (id: number) => {
+    deleteMutation.mutate(id);
   };
 
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
-        <SearchBox value={searchQuery} onSearch={setQuery} />
-
-        <SortFilter changeTag={setSortQuery} />
-
-        {isSuccess && totalPages > 1 && (
+        <SearchBox value={searchQuery} onSearch={setSearchQuery} />
+        {data && totalPages > 1 && (
           <Pagination
             totalPages={totalPages}
             currentPage={currentPage}
-            onPageChange={onPageChange}
+            onPageChange={setCurrentPage}
           />
         )}
-
-        <button onClick={createNoteBtn} className={css.button}>
-          Create note +
-        </button>
+        {
+          <button className={css.button} onClick={() => setIsModalOpen(true)}>
+            Create note +
+          </button>
+        }
       </header>
-
-      {data && data.notes.length > 0 && <NoteList notes={data.notes} />}
-
-      {modalOnClose && (
-        <NoteModal onClose={closeModal} onSuccess={closeModal} />
+      {isLoading && <Loader />}
+      {data && <NoteList notes={data.notes} onDelete={handleDeleteNote} />}
+      {isModalOpen && (
+        <NoteModal
+          onClose={() => setIsModalOpen(false)}
+          onSubmitNote={handleCreateNote}
+        />
       )}
     </div>
   );
 }
+
+export default App;
