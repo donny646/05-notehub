@@ -25,9 +25,8 @@ export default function App() {
   const [debounceQuery] = useDebounce(searchQuery, 500);
 
   const { data, isSuccess } = useQuery({
-    queryKey: ["tasks", debounceQuery, currentPage, sortQuery],
+    queryKey: ["notes", debounceQuery, currentPage, sortQuery],
     queryFn: () => fetchNotes({ searchQuery, currentPage, sortQuery }),
-    // enabled: query !== "",
   });
 
   const totalPages = data?.totalPages ?? 0;
