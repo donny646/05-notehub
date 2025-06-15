@@ -37,6 +37,8 @@ export default function App() {
       <header className={css.toolbar}>
         <SearchBox value={searchQuery} onSearch={setQuery} />
 
+        <SortFilter changeTag={setSortQuery} />
+
         {isSuccess && totalPages > 1 && (
           <Pagination
             totalPages={totalPages}
