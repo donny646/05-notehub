@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import css from "./NoteForm.module.css";
-import { ErrorMessage, Field, Form, Formik } from "formik";
+import { ErrorMessage, Field, Form, Formik, type FormikHelpers } from "formik";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { NewNoteData } from "../../types/note";
 import { createNote } from "../../services/noteService";
@@ -28,6 +28,11 @@ const initialValues: NewNoteData = {
   tag: "Personal",
 };
 
+const handleSubmit = (values: NewNoteData) => {
+  mutate(values);
+  console.log(values.tag);
+};
+
 export default function NoteForm({ onClose, onSuccess }: NoteFormProps) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -49,7 +54,6 @@ export default function NoteForm({ onClose, onSuccess }: NoteFormProps) {
     mutationFn: (noteData: NewNoteData) => createNote(noteData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
-      onSuccess();
     },
   });
 
